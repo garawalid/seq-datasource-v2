@@ -58,7 +58,6 @@ class SeqDataSourceReader(options: DataSourceOptions) extends DataSourceReader {
     if (!inputPaths.isEmpty) {
       val fs = inputPaths.head.getFileSystem(conf)
       // List all files and exclude those who starts with _ like _SUCCESS
-      // Todo: Exclude the checksum files.
       fs.listStatus(inputPaths)
         .filter(x => (x.isFile) && (!FilenameUtils.getBaseName(x.getPath.toString).startsWith("_")))
         .map(x => new SeqInputFileIO(x.getPath.toString))

@@ -71,9 +71,9 @@
                     <failOnViolation>true</failOnViolation>
                     <includeTestSourceDirectory>true</includeTestSourceDirectory>
                     <failOnWarning>false</failOnWarning>
-                    <sourceDirectory>$src/main/scala</sourceDirectory>
+                    <sourceDirectory>src/main/scala</sourceDirectory>
                     <testSourceDirectory>src/test/scala</testSourceDirectory>
-                    <configLocation>${project.basedir}/lib/scalastyle_config.xml</configLocation>
+                    <configLocation>${project.basedir}/scalastyle-config.xml</configLocation>
                     <outputFile>${project.basedir}/scalastyle-output.xml</outputFile>
                     <outputEncoding>UTF-8</outputEncoding>
                 </configuration>
@@ -85,7 +85,31 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- disable surefire -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+                <configuration>
+                    <skipTests>true</skipTests>
+                </configuration>
+            </plugin>
+            <!-- enable scalatest -->
+            <plugin>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest-maven-plugin</artifactId>
+                <version>2.0.0</version>
+                <executions>
+                    <execution>
+                        <id>test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+
 
 </project>

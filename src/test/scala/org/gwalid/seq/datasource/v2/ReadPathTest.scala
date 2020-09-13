@@ -29,7 +29,7 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
 
     val df = spark.read.format("seq").load(filePath.toString)
 
-    df.show()
+    // df.show()
     println(s"The number of partitions is ${df.rdd.getNumPartitions}")
     val resultKey: Seq[Int] = df.select("key")
       .collect().map(_ (0).asInstanceOf[Int]).toSeq.sorted
@@ -73,7 +73,7 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
 
     val df = spark.read.format("seq").load(filePath.toString)
 
-    df.show()
+    // df.show()
     println(s"The number of partitions is ${df.rdd.getNumPartitions}")
     val resultKey: Seq[Double] = df.select("key")
       .collect()
@@ -107,7 +107,7 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
 
   }
 
-  test("ReadPath with multiple partitions (old)") {
+  ignore("ReadPath with multiple partitions (old)") {
     // Todo: Move this to jmh
     val spark = SparkSession.builder().master("local[1]").getOrCreate()
     org.apache.log4j.BasicConfigurator.configure() // Fixme
@@ -127,7 +127,7 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
 
 
     val df = spark.read.format("seq").load()
-    df.show()
+    // df.show()
     println(s"count : ${df.count()}")
     assert(df.count() == 10000054)
     assert(df.rdd.getNumPartitions == 300)
