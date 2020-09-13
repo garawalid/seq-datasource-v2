@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.gwalid</groupId>
-    <artifactId>SeqDataSourceV2</artifactId>
-    <version>0.1.0-dev0</version>
+    <artifactId>seq-datasource-v2</artifactId>
+    <version>0.1.0-dev1</version>
 
 
     <properties>
@@ -42,12 +42,10 @@
 
     </dependencies>
 
-
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
         <testSourceDirectory>src/test/scala</testSourceDirectory>
         <plugins>
-
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
@@ -64,7 +62,29 @@
                     <scalaVersion>${scala.version}.12</scalaVersion>
                 </configuration>
             </plugin>
-
+            <plugin>
+                <groupId>org.scalastyle</groupId>
+                <artifactId>scalastyle-maven-plugin</artifactId>
+                <version>1.0.0</version>
+                <configuration>
+                    <verbose>false</verbose>
+                    <failOnViolation>true</failOnViolation>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                    <failOnWarning>false</failOnWarning>
+                    <sourceDirectory>$src/main/scala</sourceDirectory>
+                    <testSourceDirectory>src/test/scala</testSourceDirectory>
+                    <configLocation>${project.basedir}/lib/scalastyle_config.xml</configLocation>
+                    <outputFile>${project.basedir}/scalastyle-output.xml</outputFile>
+                    <outputEncoding>UTF-8</outputEncoding>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 

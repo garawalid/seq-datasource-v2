@@ -1,14 +1,15 @@
-package org.gwalid.SeqDataSourceV2
+package org.gwalid.seq.datasource.v2
 
 import java.nio.file.Files
 import java.util
-import java.util.Map
-
-import org.apache.hadoop.fs.Path
-import org.apache.spark.sql.sources.v2.DataSourceOptions
-import org.scalatest.FunSuite
 
 import scala.util.Random
+
+import org.apache.hadoop.fs.Path
+import org.scalatest.FunSuite
+
+import org.apache.spark.sql.sources.v2.DataSourceOptions
+
 
 class SeqDataSourceReaderTest extends FunSuite {
   val seqFileGenerator = new SeqFileGenerator()
@@ -36,10 +37,11 @@ class SeqDataSourceReaderTest extends FunSuite {
 
     val files = seqDSReader
       .listAllFiles()
-      .map(_.toString.replace("file:",""))
+      .map(_.toString.replace("file:", ""))
       .sorted
 
-    val expectedFiles = Seq(textFilePath.toString,floatBooleanFilePath.toString,IntLongFilePath.toString).sorted
+    val expectedFiles =
+      Seq(textFilePath.toString, floatBooleanFilePath.toString, IntLongFilePath.toString).sorted
     assert(files == expectedFiles)
   }
 

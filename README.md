@@ -1,7 +1,7 @@
 # Roadmap of SeqDSv2
 
 - Read Path
-    - read a directory path 
+    - [] read a directory path 
     - read multiples seq files
     - read regex pattern
 - Read optimization ( filter push down, limit count)

@@ -1,9 +1,12 @@
-package org.gwalid.SeqDataSourceV2
+package org.gwalid.seq.datasource.v2
 
-import org.apache.spark.sql.SparkSession
 import org.scalatest.FunSuite
 
+import org.apache.spark.sql.SparkSession
+
+
 class DataSetGeneratorTest extends FunSuite {
+  // Todo: Move this class to benchmark jmh
   test("") {
     // download and convert https://grouplens.org/datasets/movielens/ to SeqFiles with Spark
     val spark = SparkSession.builder().master("local[1]").getOrCreate()

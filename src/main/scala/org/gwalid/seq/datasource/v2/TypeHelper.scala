@@ -1,7 +1,8 @@
-package org.gwalid.SeqDataSourceV2
+package org.gwalid.seq.datasource.v2
 
-import org.apache.hadoop.io.{BooleanWritable, BytesWritable, DoubleWritable, FloatWritable, IntWritable, LongWritable, NullWritable, Text, Writable}
-import org.apache.spark.sql.types.{BooleanType, DataType, DoubleType, FloatType, IntegerType, LongType, NullType, StringType}
+import org.apache.hadoop.io._
+
+import org.apache.spark.sql.types._
 
 object TypeHelper {
 
@@ -13,9 +14,13 @@ object TypeHelper {
       case hadoopType if hadoopType == classOf[IntWritable] => IntegerType
       case hadoopType if hadoopType == classOf[BooleanWritable] => BooleanType
       case hadoopType if hadoopType == classOf[NullWritable] => NullType
-      case hadoopType if hadoopType == classOf[BytesWritable] => StringType // todo: check if there is no bytes in SparkTypes
+      case hadoopType if hadoopType == classOf[BytesWritable] => StringType
       case hadoopType if hadoopType == classOf[Text] => StringType
-      case hadoopType => throw new NotImplementedError(s"The ${hadoopType} type is not implemented yet!")
+      case hadoopType if hadoopType == classOf[ArrayWritable] | hadoopType == classOf[MapWritable] |
+        hadoopType == classOf[ByteWritable] => throw new NotImplementedError("Not implemented yet!")
+      // Todo: ArrayType, MapType, ByteType
+      case hadoopType =>
+        throw new NotImplementedError(s"The ${hadoopType} type is not implemented yet!")
     }
 
   }
