@@ -66,6 +66,7 @@ class SeqDataSourceReader(options: DataSourceOptions) extends DataSourceReader {
     }
   }
 
+
   private def getDataSchema(): Seq[Class[_ <: Writable]] = {
     // Given a list of path files, check if 10% of these files are valid sequence format
     // and they have the same schema
@@ -81,7 +82,7 @@ class SeqDataSourceReader(options: DataSourceOptions) extends DataSourceReader {
       val pathFile = seqFileIO(randomIndex).getPath()
 
       val fileOption = SequenceFile.Reader.file(pathFile)
-      val bufferOption = SequenceFile.Reader.bufferSize(500) // Todo : adjust this value!
+      val bufferOption = SequenceFile.Reader.bufferSize(1500) // Todo : adjust this value!
       // Todo: Speed reading with OnlyHeaderOption.class
       val reader = new SequenceFile.Reader(conf, fileOption, bufferOption)
       kClassSample += reader.getKeyClass.asSubclass(classOf[Writable])

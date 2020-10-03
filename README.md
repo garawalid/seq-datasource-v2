@@ -1,8 +1,8 @@
 # Roadmap of SeqDSv2
 
 - Read Path
-    - [] read a directory path 
-    - read multiples seq files
+    - [x] read a directory path 
+    - [x] read multiples seq files
     - read regex pattern
 - Read optimization ( filter push down, limit count)
 - Write Path
@@ -15,3 +15,8 @@
 
 - Read Path with Spark v2.3, 2.4 and 3
 - support map types
+
+
+## Notes:
+Fix Array[Byte] 
+Array by default => Array[String]

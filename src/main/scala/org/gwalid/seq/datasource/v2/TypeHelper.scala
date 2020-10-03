@@ -8,16 +8,16 @@ object TypeHelper {
 
   def convertHadoopToSpark(hadoopType: Class[_ <: Writable]): DataType = {
     hadoopType match {
-      case hadoopType if hadoopType == classOf[LongWritable] => LongType
-      case hadoopType if hadoopType == classOf[DoubleWritable] => DoubleType
-      case hadoopType if hadoopType == classOf[FloatWritable] => FloatType
-      case hadoopType if hadoopType == classOf[IntWritable] => IntegerType
-      case hadoopType if hadoopType == classOf[BooleanWritable] => BooleanType
-      case hadoopType if hadoopType == classOf[NullWritable] => NullType
-      case hadoopType if hadoopType == classOf[BytesWritable] => StringType
-      case hadoopType if hadoopType == classOf[Text] => StringType
-      case hadoopType if hadoopType == classOf[ArrayWritable] | hadoopType == classOf[MapWritable] |
-        hadoopType == classOf[ByteWritable] => throw new NotImplementedError("Not implemented yet!")
+      case lw if lw == classOf[LongWritable] => LongType
+      case dw if dw == classOf[DoubleWritable] => DoubleType
+      case fw if fw == classOf[FloatWritable] => FloatType
+      case iw if iw == classOf[IntWritable] => IntegerType
+      case bw if bw == classOf[BooleanWritable] => BooleanType
+      case nw if nw == classOf[NullWritable] => NullType
+      case bw if bw == classOf[BytesWritable] => StringType //  Fixme: Array[Byte]
+      case t if t == classOf[Text] => StringType
+      case mw if mw == classOf[MapWritable]
+      => throw new NotImplementedError("Not implemented yet!")
       // Todo: ArrayType, MapType, ByteType
       case hadoopType =>
         throw new NotImplementedError(s"The ${hadoopType} type is not implemented yet!")

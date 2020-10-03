@@ -4,10 +4,9 @@ import java.nio.file.Files
 import java.util
 
 import scala.util.Random
-
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.SparkSession
 import org.scalatest.FunSuite
-
 import org.apache.spark.sql.sources.v2.DataSourceOptions
 
 
@@ -33,6 +32,8 @@ class SeqDataSourceReaderTest extends FunSuite {
     optionsMap.put("path", dataPath.toString)
     val options: DataSourceOptions = new DataSourceOptions(optionsMap)
 
+    // The SeqDataSourceReader need an active spark context
+    val _ = SparkSession.builder().master("local[1]").getOrCreate()
     val seqDSReader = new SeqDataSourceReader(options)
 
     val files = seqDSReader
