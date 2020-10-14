@@ -14,8 +14,28 @@
         <maven.compiler.target>1.5</maven.compiler.target>
         <encoding>UTF-8</encoding>
         <scala.version>2.11</scala.version>
-        <spark.version>2.4.6</spark.version>
+        <jmh.version>1.21</jmh.version>
     </properties>
+
+    <profiles>
+        <profile>
+            <id>spark-2.4</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <spark.version>2.4.6</spark.version>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>spark-2.3</id>
+            <properties>
+                <spark.version>2.3.4</spark.version>
+            </properties>
+        </profile>
+    </profiles>
+
 
     <dependencies>
         <dependency>
@@ -33,13 +53,26 @@
             <artifactId>spark-sql_${scala.version}</artifactId>
             <version>${spark.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.version}</artifactId>
             <version>3.0.8</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.openjdk.jmh</groupId>
+            <artifactId>jmh-core</artifactId>
+            <version>${jmh.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjdk.jmh</groupId>
+            <artifactId>jmh-generator-annprocess</artifactId>
+            <version>${jmh.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.lingala.zip4j</groupId>
+            <artifactId>zip4j</artifactId>
+            <version>2.6.3</version>
+        </dependency>
     </dependencies>
 
     <build>

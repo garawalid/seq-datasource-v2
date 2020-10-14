@@ -44,12 +44,12 @@ class SeqInputPartitionReader(seqInputFile: SeqInputFileIO)
       case x: DoubleWritable => x.get()
       case x: FloatWritable => x.get()
       case x: IntWritable => x.get()
+      case x: BooleanWritable => x.get()
       case _: NullWritable => null
-      case x: BytesWritable =>
-        throw new NotImplementedError("BytesWritable is not implemented yet!")
+      case x: BytesWritable => UTF8String.fromBytes(x.copyBytes())
       case x: Text => UTF8String.fromString(x.toString)
       case x: ArrayWritable => extractFromArrayOfWritable(x.get())
-      case x => throw new RuntimeException(s"${x} is not implemented yet!")
+      case x => throw new RuntimeException(s"${x.getClass} is not implemented yet!")
     }
 
   }

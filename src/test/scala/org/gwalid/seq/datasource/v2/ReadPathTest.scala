@@ -3,8 +3,7 @@ package org.gwalid.seq.datasource.v2
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileStatus, Path}
+import org.apache.hadoop.fs.Path
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 
 import org.apache.spark.sql.SparkSession
@@ -43,10 +42,28 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
     assert(resultValue == expectedValue)
   }
 
-  test("Read DataFrame Float, Boolean") {
-    // Fixme: Compelte this test
+  test("Read DataFrame Float & Boolean") {
+    val spark = SparkSession.builder().master("local[1]").getOrCreate()
     val filePath = new Path(tempDir, "data").suffix("/sample-float-boolean.seq")
+
     seqFileGenerator.generateFloatBoolean(filePath)
+
+    spark.sparkContext.setLogLevel("WARN")
+
+    val df = spark.read.format("seq").load(filePath.toString)
+
+    val resultKey: Seq[Float] = df.select("key")
+      .collect()
+      .map(_ (0).asInstanceOf[Float]).toSeq.sorted
+    val expectedKey = seqFileGenerator.keyData.asInstanceOf[Seq[Float]].sorted
+
+    val resultValue: Seq[Boolean] = df.select("value")
+      .collect()
+      .map(_ (0).asInstanceOf[Boolean]).toSeq.sorted
+    val expectedValue = seqFileGenerator.valueData.asInstanceOf[Seq[Boolean]].sorted
+
+    assert(resultKey == expectedKey)
+    assert(resultValue == expectedValue)
   }
 
   test("Read DataFrame Double & Int") {
@@ -75,8 +92,7 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
     assert(resultValue == expectedValue)
   }
 
-  ignore("Read DataFrame Null & Bytes") {
-    // Todo: Fix this test.
+  test("Read DataFrame Null & Bytes") {
     val spark = SparkSession.builder().master("local[1]").getOrCreate()
     org.apache.log4j.BasicConfigurator.configure() // Fixme
     val filePath = new Path(tempDir, "data").suffix("/sample-null-bytes.seq")
@@ -96,12 +112,8 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
       .map(_ (0).asInstanceOf[String]).toSeq.sorted
     val expectedValue: Seq[String] = seqFileGenerator.valueData.asInstanceOf[Seq[Seq[Byte]]]
       .map(x => new String(x.toArray[Byte], StandardCharsets.UTF_8)).sorted
-
     assert(resultKey == expectedKey)
-    println(seqFileGenerator.valueData.head)
-    println(resultValue.head.getBytes().toVector)
-    // Fixme: Debug this test with Array of Bytes (Int)
-    // assert(resultValue(0).equals(expectedValue(0)))
+    assert(resultValue == expectedValue)
   }
 
   test("Read DataFrame Text & Int") {
@@ -159,7 +171,7 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
 
     // Assert that the result is an Array Of String
     // even the data was written as ArrayWritable[Int]
-    val firstKeyRow = df.select("key").head(1).map(_(0))
+    val firstKeyRow = df.select("key").head(1).map(_ (0))
     assert(firstKeyRow.head.asInstanceOf[Seq[Any]].head.isInstanceOf[String])
   }
 
@@ -174,7 +186,6 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
 
     val df = spark.read.format("seq").load(filePath.toString)
 
-    df.show()
   }
 
 
@@ -193,33 +204,6 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
     val df = spark.read.format("seq").load(dataPath.toString)
     assert(df.rdd.getNumPartitions == nbFiles)
     assert(df.count() == nbFiles * 100)
-
-  }
-
-  ignore("ReadPath with multiple partitions (old)") {
-    // Todo: Move this to jmh
-    val spark = SparkSession.builder().master("local[1]").getOrCreate()
-    org.apache.log4j.BasicConfigurator.configure() // Fixme
-
-    spark.sparkContext.setLogLevel("WARN")
-
-    // Test path with / and without.
-    val paths = Seq("/home/nops/Projects/data/ml-10M-seq", "/home/nops/Projects/data/ml-10M-seq/")
-
-    paths.foreach(path => {
-      val df = spark.read.format("seq").load(path)
-      // fixme: Enable tests
-      // assert(df.count() == 10000054)
-      // assert(df.rdd.getNumPartitions == 300)
-
-    })
-
-
-    val df = spark.read.format("seq").load()
-    println(s"count : ${df.count()}")
-    assert(df.count() == 10000054)
-    assert(df.rdd.getNumPartitions == 300)
-
 
   }
 
