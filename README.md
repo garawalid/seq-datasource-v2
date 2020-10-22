@@ -1,4 +1,7 @@
-# Roadmap of SeqDSv2
+# SeqDataSourceV2
+[![Build Status](https://travis-ci.com/garawalid/seq-datasource-v2.svg?token=SMJd5DBDDJrYEpCNWqiF&branch=master)](https://travis-ci.com/garawalid/seq-datasource-v2)
+
+## Roadmap of SeqDSv2
 
 - Read Path
     - [x] read a directory path 
@@ -9,7 +12,7 @@
 - Vectorized Read
 - DevOps:
     - [x] scala style
-    - [ ] coverage Travis CI
+    - [x] Travis CI
 - [x] Benchmark with RDD API
 
 
