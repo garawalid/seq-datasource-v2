@@ -142,7 +142,7 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
   }
 
 
-  ignore("Read DataFrame ArrayOfInt & Int") {
+  test("Read DataFrame ArrayOfInt & Int") {
     // This test is disabled until Read Path support ArrayWritable.
     val spark = SparkSession.builder().master("local[1]").getOrCreate()
     org.apache.log4j.BasicConfigurator.configure() // Fixme
@@ -175,7 +175,7 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
     assert(firstKeyRow.head.asInstanceOf[Seq[Any]].head.isInstanceOf[String])
   }
 
-  ignore("Read DataFrame ArrayOfText & Int") {
+  test("Read DataFrame ArrayOfText & Int") {
     val spark = SparkSession.builder().master("local[1]").getOrCreate()
     org.apache.log4j.BasicConfigurator.configure() // Fixme
     val filePath = new Path(tempDir, "data").suffix("/sample-array-int.seq")

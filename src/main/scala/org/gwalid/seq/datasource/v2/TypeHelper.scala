@@ -16,8 +16,7 @@ object TypeHelper {
       case nw if nw == classOf[NullWritable] => NullType
       case bw if bw == classOf[BytesWritable] => StringType //  Fixme: Array[Byte]
       case t if t == classOf[Text] => StringType
-      case mw if mw == classOf[MapWritable]
-      => throw new NotImplementedError("Not implemented yet!")
+      case at if at == classOf[ArrayWritable] => ArrayType(StringType, containsNull = true)
       // Todo: ArrayType, MapType, ByteType
       case hadoopType =>
         throw new NotImplementedError(s"The ${hadoopType} type is not implemented yet!")

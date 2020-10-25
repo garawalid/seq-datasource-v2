@@ -4,11 +4,9 @@ import java.util
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
-
 import org.apache.commons.io.FilenameUtils
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.io.{SequenceFile, Writable}
-
+import org.apache.hadoop.io.{ArrayWritable, SequenceFile, Writable}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.sources.v2.DataSourceOptions
@@ -86,6 +84,18 @@ class SeqDataSourceReader(options: DataSourceOptions) extends DataSourceReader {
       // Todo: Speed reading with OnlyHeaderOption.class
       val reader = new SequenceFile.Reader(conf, fileOption, bufferOption)
       kClassSample += reader.getKeyClass.asSubclass(classOf[Writable])
+
+
+
+//        val aw: ArrayWritable = WritableHelper
+//          .newInstance(reader.getKeyClass.asInstanceOf[Class[Writable]], conf)
+//            .asInstanceOf[ArrayWritable]
+//
+//        println(s"before : ${aw.getValueClass}")
+//        reader.next(aw)
+//        val valueClass = aw.getValueClass
+//        println(valueClass)
+
       vClassSample += reader.getValueClass.asSubclass(classOf[Writable])
       reader.close()
 
