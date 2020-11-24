@@ -29,7 +29,7 @@ class SeqInputPartitionReader(seqInputFile: SeqInputFileIO)
 
   private def getReader: SequenceFile.Reader = {
 
-    val fileOption = SequenceFile.Reader.file(seqInputFile.getPath())
+    val fileOption = SequenceFile.Reader.file(seqInputFile.getPath)
 
     new SequenceFile.Reader(conf, fileOption)
 

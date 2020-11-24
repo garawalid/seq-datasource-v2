@@ -6,7 +6,7 @@
 
     <groupId>org.gwalid</groupId>
     <artifactId>seq-datasource-v2</artifactId>
-    <version>0.1.0-dev1</version>
+    <version>0.1.1-dev1</version>
 
 
     <properties>
@@ -112,6 +112,8 @@
                 </configuration>
                 <executions>
                     <execution>
+                        <id>style-check</id>
+                        <phase>test</phase>
                         <goals>
                             <goal>check</goal>
                         </goals>

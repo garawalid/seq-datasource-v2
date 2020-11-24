@@ -12,11 +12,12 @@ import org.apache.hadoop.io.{SequenceFile, Writable}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.sources.v2.DataSourceOptions
-import org.apache.spark.sql.sources.v2.reader.{DataSourceReader, InputPartition}
+import org.apache.spark.sql.sources.v2.reader.{DataSourceReader, InputPartition, Statistics, SupportsReportStatistics}
 import org.apache.spark.sql.types.{StructField, StructType}
 
 
-class SeqDataSourceReader(options: DataSourceOptions) extends DataSourceReader {
+class SeqDataSourceReader(options: DataSourceOptions)
+  extends DataSourceReader with SupportsReportStatistics{
 
   val conf = SparkSession.active.sessionState.newHadoopConf()
   val filesPath = listAllFiles()
@@ -79,7 +80,7 @@ class SeqDataSourceReader(options: DataSourceOptions) extends DataSourceReader {
 
     for (i <- 0 until maxFiles) {
       val randomIndex = Random.nextInt(seqFileIO.length)
-      val pathFile = seqFileIO(randomIndex).getPath()
+      val pathFile = seqFileIO(randomIndex).getPath
 
       val fileOption = SequenceFile.Reader.file(pathFile)
       val bufferOption = SequenceFile.Reader.bufferSize(1500) // Todo : adjust this value!
@@ -102,4 +103,10 @@ class SeqDataSourceReader(options: DataSourceOptions) extends DataSourceReader {
     Seq(kClassSample.head, vClassSample.head)
   }
 
+  override def estimateStatistics(): Statistics = {
+    // estimate Statistics for all files
+    val totalSizeInBytes = seqFileIO.map(f => f.getSizeInByte).sum
+    val totalNumRows = seqFileIO.map(f => f.getNumRows).sum
+    new SeqDataSourceStatistics(totalSizeInBytes, totalNumRows.toLong)
+  }
 }
