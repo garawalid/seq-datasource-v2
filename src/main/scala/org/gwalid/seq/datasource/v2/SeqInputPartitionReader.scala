@@ -6,10 +6,11 @@ import org.apache.hadoop.io._
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.ArrayData
 import org.apache.spark.sql.sources.v2.reader.InputPartitionReader
+import org.apache.spark.sql.types.StructType
 import org.apache.spark.unsafe.types.UTF8String
 
 
-class SeqInputPartitionReader(seqInputFile: SeqInputFileIO)
+class SeqInputPartitionReader(seqInputFile: SeqInputFileIO, requestedSchema: Option[StructType])
   extends InputPartitionReader[InternalRow] {
 
   val conf = new Configuration() // Todo: Ship the conf from the driver to the executor!
@@ -23,7 +24,7 @@ class SeqInputPartitionReader(seqInputFile: SeqInputFileIO)
 
   override def next(): Boolean = reader.next(key, value)
 
-  override def get(): InternalRow = InternalRow(extractValue(key), extractValue(value))
+  override def get(): InternalRow = projectInternalRow()
 
   override def close(): Unit = reader.close()
 
@@ -35,6 +36,30 @@ class SeqInputPartitionReader(seqInputFile: SeqInputFileIO)
 
   }
 
+  private def projectInternalRow(): InternalRow = {
+    // Project the schema and build the correct InternalRow.
+    if (requestedSchema.isDefined) {
+      if (requestedSchema.get.length == 1) {
+        val requestedField = requestedSchema.get.last.name
+        val internalRow = requestedField match {
+          case "key" => InternalRow(extractValue(key))
+          case "value" => InternalRow(extractValue(value))
+        }
+        internalRow
+      } else {
+        // Assure the correct order
+        val schemaNames = requestedSchema.get.map(_.name)
+        schemaNames match {
+          case Seq("key", "value") => InternalRow(extractValue(key), extractValue(value))
+          case Seq("value", "key") => InternalRow(extractValue(value), extractValue(key))
+        }
+
+      }
+    } else {
+      InternalRow(extractValue(key), extractValue(value))
+    }
+
+  }
 
   private def extractValue(writable: Writable) = {
     // Todo: move it to WritableHelper
