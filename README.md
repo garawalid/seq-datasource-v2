@@ -15,14 +15,8 @@
     - [x] Travis CI
 - [x] Benchmark with RDD API
 
-
 - Read Path with Spark v2.3, 2.4 and 3
-- support MapType
 
-
-
-## Notes:
-Fix Array[Byte] 
 
 
 ## Motivation:
@@ -45,6 +39,19 @@ Fix Array[Byte]
 
 ## Usage
 `#Todo`
+
+It's possible to pass a schema to DataFrame API.
+- The filed names must be **key** and/or **value**.
+> The name **key** will project the key field of the Seq file. The same goes for the **value**
+- The filed type should match the type of the seq file.
+
+```scala
+    val schema = new StructType()
+      .add("key", IntegerType, true)
+      .add("value", LongType, true)
+    val df = spark.read.format("seq").schema(schema).load("path")
+
+```
 
 ## Benchmark
 The benchmark uses the [MovieLens 25M Dataset](https://grouplens.org/datasets/movielens/25m/) saved as `sequence` file.

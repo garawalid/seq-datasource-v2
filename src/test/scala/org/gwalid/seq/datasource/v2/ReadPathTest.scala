@@ -141,54 +141,6 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
     assert(resultValue == expectedValue)
   }
 
-
-  ignore("Read DataFrame ArrayOfInt & Int") {
-    // This test is disabled until Read Path support ArrayWritable.
-    val spark = SparkSession.builder().master("local[1]").getOrCreate()
-    org.apache.log4j.BasicConfigurator.configure() // Fixme
-    val filePath = new Path(tempDir, "data").suffix("/sample-array-int.seq")
-
-    seqFileGenerator.generateArrayOfIntInt(filePath)
-
-    spark.sparkContext.setLogLevel("WARN")
-
-    val df = spark.read.format("seq").load(filePath.toString)
-
-    // todo: Test Array of Int, Long & String
-    val resultKey: Seq[Seq[String]] = df.select("key")
-      .collect()
-      .map(_ (0).asInstanceOf[Seq[String]]).toSeq // fixme: sorted ??
-    val expectedKey: Seq[Seq[String]] = seqFileGenerator.keyData.asInstanceOf[Seq[Seq[Int]]]
-      .map(x => x.map(_.toString))
-
-    val resultValue: Seq[Int] = df.select("value")
-      .collect()
-      .map(_ (0).asInstanceOf[Int]).toSeq.sorted
-    val expectedValue = seqFileGenerator.valueData.asInstanceOf[Seq[Int]].sorted
-
-    resultKey.zip(expectedKey).foreach(x => assert(x._1 == x._2))
-    assert(resultValue == expectedValue)
-
-    // Assert that the result is an Array Of String
-    // even the data was written as ArrayWritable[Int]
-    val firstKeyRow = df.select("key").head(1).map(_ (0))
-    assert(firstKeyRow.head.asInstanceOf[Seq[Any]].head.isInstanceOf[String])
-  }
-
-  ignore("Read DataFrame ArrayOfText & Int") {
-    val spark = SparkSession.builder().master("local[1]").getOrCreate()
-    org.apache.log4j.BasicConfigurator.configure() // Fixme
-    val filePath = new Path(tempDir, "data").suffix("/sample-array-int.seq")
-
-    seqFileGenerator.generateArrayOfTextInt(filePath)
-
-    spark.sparkContext.setLogLevel("WARN")
-
-    val df = spark.read.format("seq").load(filePath.toString)
-
-  }
-
-
   test("ReadPath with multiple partitions") {
 
     val spark = SparkSession.builder().master("local[1]").getOrCreate()

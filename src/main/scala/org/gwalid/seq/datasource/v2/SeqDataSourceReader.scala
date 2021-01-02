@@ -16,21 +16,25 @@ import org.apache.spark.sql.sources.v2.reader.{DataSourceReader, InputPartition,
 import org.apache.spark.sql.types.{StructField, StructType}
 
 
-class SeqDataSourceReader(options: DataSourceOptions)
-  extends DataSourceReader with SupportsReportStatistics{
+class SeqDataSourceReader(options: DataSourceOptions,
+                          requestedSchema: Option[StructType] = None)
+  extends DataSourceReader with SupportsReportStatistics {
 
   val conf = SparkSession.active.sessionState.newHadoopConf()
   val filesPath = listAllFiles()
-
   val seqFileIO: Seq[SeqInputFileIO] = listAllSeqFiles()
 
+  lazy val dataSchema: StructType = getDataSchema
+
+
   override def readSchema(): StructType = {
-    val kvTypes = getDataSchema()
-    val keySparkType = TypeHelper.convertHadoopToSpark(kvTypes.head)
-    val valueSparkType = TypeHelper.convertHadoopToSpark(kvTypes.last)
-    new StructType()
-      .add(StructField("key", keySparkType, nullable = true))
-      .add(StructField("value", valueSparkType, nullable = true))
+    schemaSanity()
+
+    if (requestedSchema.isDefined) {
+      requestedSchema.get
+    } else {
+      dataSchema
+    }
   }
 
   override def planInputPartitions(): util.List[InputPartition[InternalRow]] = {
@@ -39,7 +43,8 @@ class SeqDataSourceReader(options: DataSourceOptions)
       // fixme: move it to a proper place
       throw new RuntimeException("There is no path to read. Please set a Path.")
     }
-    seqFileIO.foreach(seqInputFile => inputPartitions.add(new SeqInputPartition(seqInputFile)))
+    seqFileIO.foreach(seqInputFile =>
+      inputPartitions.add(new SeqInputPartition(seqInputFile, requestedSchema)))
 
     inputPartitions
   }
@@ -68,12 +73,16 @@ class SeqDataSourceReader(options: DataSourceOptions)
   }
 
 
-  private def getDataSchema(): Seq[Class[_ <: Writable]] = {
-    // Given a list of path files, check if 10% of these files are valid sequence format
-    // and they have the same schema
+  private def getDataSchema: StructType = {
+    // If requestedSchema is None: Given a list of path files, check if 10% of these files are
+    // valid sequence format and they have the same schema
+    // If requestedSchema is not None: Collect the schema only from one file.
 
     // get 2% samples from all files.
-    val maxFiles = Math.ceil(seqFileIO.length * 0.02).toInt
+    val maxFiles = requestedSchema match {
+      case None => Math.ceil(seqFileIO.length * 0.02).toInt
+      case _ => 1
+    }
 
     var kClassSample = ArrayBuffer.empty[Class[_ <: Writable]]
     var vClassSample = ArrayBuffer.empty[Class[_ <: Writable]]
@@ -100,7 +109,58 @@ class SeqDataSourceReader(options: DataSourceOptions)
       throw new RuntimeException("The sequence files doesn't have the same schema!")
     }
 
-    Seq(kClassSample.head, vClassSample.head)
+    val kvTypes = Seq(kClassSample.head, vClassSample.head)
+
+    val keySparkType = TypeHelper.convertHadoopToSpark(kvTypes.head)
+    val valueSparkType = TypeHelper.convertHadoopToSpark(kvTypes.last)
+    new StructType()
+      .add(StructField("key", keySparkType, nullable = true))
+      .add(StructField("value", valueSparkType, nullable = true))
+  }
+
+  private def schemaSanity(): Unit = {
+    // Assert that the requestedSchema is the same as the dataSchema
+
+    // Check if the requestedSchema respects the name rules.
+    // The name rule : The tuple (key, value) is mandatory because it helps us distinguish
+    // what we are requesting (whether the key or the value in the Seq file).
+    if (requestedSchema.isDefined) {
+      val requestedNames = requestedSchema.get.map(_.name)
+      requestedNames.length match {
+        case 2 => if (requestedNames.toSet != Set("key", "value")) throw new
+            IllegalArgumentException(s"The name of requested schema should be 'key' and 'value'." +
+              s" The current names are ${requestedNames.head}, ${requestedNames.last}.")
+        case 1 => if (requestedNames != Seq("key") && requestedNames != Seq("value")) throw
+          new IllegalArgumentException(s"The name of requested schema should be 'key' or 'value'." +
+            s" The current name is ${requestedNames.head}.")
+        case _ => throw new IllegalArgumentException("The requested schema is empty.")
+      }
+    }
+
+    // Check the requestedTypes against the dataTypes
+    if (requestedSchema.isDefined) {
+      val reqTypes = requestedSchema.get.map(_.dataType)
+      val currTypes = dataSchema.map(_.dataType)
+      val isValidSchema = reqTypes.length match {
+        case len if len == 2 && requestedSchema.get.head.name == "key" =>
+          reqTypes.head == currTypes.head && reqTypes.last == currTypes.last
+        case len if len == 2 && requestedSchema.get.head.name == "value" =>
+          reqTypes.head == currTypes.last && reqTypes.last == currTypes.head
+        case len if len == 1 && requestedSchema.get.head.name == "key" =>
+          reqTypes.head == currTypes.head
+        case len if len == 1 && requestedSchema.get.head.name == "value" =>
+          reqTypes.last == currTypes.last
+        case 0 => true
+        case _ => false
+      }
+
+      if (!isValidSchema) throw new IllegalArgumentException("The requested schema " +
+        "should have the same type as the data schema. " +
+        s"The requested schema: ${requestedSchema.get}, the data schema: ${dataSchema}")
+
+
+    }
+
   }
 
   override def estimateStatistics(): Statistics = {
