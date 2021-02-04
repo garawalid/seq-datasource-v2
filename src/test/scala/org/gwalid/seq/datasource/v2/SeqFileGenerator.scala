@@ -189,4 +189,22 @@ class SeqFileGenerator {
 
   }
 
+  def getKeyData: Seq[Any] = keyData
+
+  def getValueData: Seq[Any] = valueData
+
+  def getKeyDataAs[T: Ordering]: Seq[T] = keyData.asInstanceOf[Seq[T]].sorted
+
+  def getValueDataAs[T: Ordering]: Seq[T] = valueData.asInstanceOf[Seq[T]].sorted
+
+  def getKeyDataAsString: Seq[String] = {
+    keyData.asInstanceOf[Seq[Seq[Byte]]]
+      .map(x => new String(x.toArray[Byte], StandardCharsets.UTF_8)).sorted
+  }
+
+  def getValueDataAsString: Seq[String] = {
+    valueData.asInstanceOf[Seq[Seq[Byte]]]
+      .map(x => new String(x.toArray[Byte], StandardCharsets.UTF_8)).sorted
+  }
+
 }

@@ -16,13 +16,16 @@ class SeqInputFileIO(path: String) extends Serializable {
 
     val conf = new Configuration() // Fixme: Get it from SparkSession instead
     val fs = currentPath.getFileSystem(conf)
-    fs.listStatus(currentPath).head.getLen
+    val size = fs.listStatus(currentPath).head.getLen
+    size
   }
 
-  def getNumRows: Int = {
+  def getNumRows: Long = {
     // Estimates the number of rows: We divide the total size by 30 Bytes
-    math.ceil(sizeInBytes / 30).toInt
+    println(s"getNumRows: ${sizeInBytes / 30L}")
+    sizeInBytes / 30L
   }
+
 
 
 

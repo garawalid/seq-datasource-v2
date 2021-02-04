@@ -19,7 +19,6 @@ class SeqDataSourceReaderTest extends FunSuite {
 
 
   test("fsListAllSeqFiles") {
-
     val dataPath = new Path(tempDir, "data")
 
     val textFilePath = dataPath.suffix("/sample-il.text")

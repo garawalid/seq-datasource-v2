@@ -40,7 +40,7 @@
 ## Usage
 `#Todo`
 
-It's possible to pass a schema to DataFrame API.
+It's possible to pass a schema to DataFrame API. There are few rules around **scehma**.
 - The filed names must be **key** and/or **value**.
 > The name **key** will project the key field of the Seq file. The same goes for the **value**
 - The filed type should match the type of the seq file.

@@ -3,6 +3,7 @@ package org.gwalid.seq.datasource.v2
 import org.apache.hadoop.io._
 
 import org.apache.spark.sql.types._
+import org.apache.spark.unsafe.types.UTF8String
 
 object TypeHelper {
 
@@ -24,5 +25,6 @@ object TypeHelper {
     }
 
   }
+
 
 }
