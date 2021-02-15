@@ -5,26 +5,27 @@ import java.util
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.{BaseFixedWidthVector, BaseVariableWidthVector, BigIntVector, BitVector, Float4Vector, Float8Vector, IntVector, ValueVector, VarBinaryVector}
 import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.{BooleanWritable, BytesWritable, DoubleWritable, FloatWritable, IntWritable, LongWritable, MapWritable, NullWritable, SequenceFile, Text, Writable}
+import org.apache.spark.SerializableWritable
+import org.apache.spark.internal.Logging
 import org.apache.spark.sql.sources.v2.reader.InputPartitionReader
-import org.apache.spark.sql.types.{BooleanType, DoubleType, FloatType, IntegerType, NullType, StringType}
 import org.apache.spark.sql.vectorized.{ArrowColumnVector, ColumnarBatch}
-import scala.collection.JavaConversions._
-import scala.collection.mutable
 
-class SeqBatchInputPartitionReader(seqInputFileIO: SeqInputFileIO)
-  extends InputPartitionReader[ColumnarBatch] {
+import scala.collection.JavaConversions._
+
+class SeqBatchInputPartitionReader(seqInputFileIO: SeqInputFileIO, vectorizedReaderBatchSize: Int,
+                                   serializableConf: SerializableWritable[Configuration])
+  extends InputPartitionReader[ColumnarBatch] with Logging {
 
   private val reader = getReader
-  // Todo: Ship the conf from the driver to the executor!
-  lazy private val conf = new Configuration()
 
+  lazy private val conf = serializableConf.value
 
   private val keyClass: Class[Writable] = reader.getKeyClass.asInstanceOf[Class[Writable]]
   private val valueClass: Class[Writable] = reader.getValueClass.asInstanceOf[Class[Writable]]
 
   private var currentBatchPosition: Int = 0
-  private val vectorizedReaderBatchSize: Int = 4096 // Todo: Make it customizable
   private val batches: Seq[ColumnarBatch] = fillBatches()
   private val numBatch = batches.length
 
@@ -37,16 +38,12 @@ class SeqBatchInputPartitionReader(seqInputFileIO: SeqInputFileIO)
   }
 
   override def close(): Unit = {
-    // Fixme: This leads to close the reader before reading data. Invistage this issue!
-    // reader.close()
+    reader.close()
     batches.foreach(x => x.close())
-
   }
 
   private def getReader: SequenceFile.Reader = {
-
-    val fileOption = SequenceFile.Reader.file(seqInputFileIO.getPath)
-
+    val fileOption = SequenceFile.Reader.file(new Path(seqInputFileIO.getURI))
     new SequenceFile.Reader(conf, fileOption)
 
   }
@@ -61,8 +58,8 @@ class SeqBatchInputPartitionReader(seqInputFileIO: SeqInputFileIO)
     val valueVector = ArrowHelper.buildVectorFrom(valueClass, "value", valueAllocator)
 
     // Vector allocation
-    ArrowHelper.allocateVector(keyVector, vectorizedReaderBatchSize)
-    ArrowHelper.allocateVector(valueVector, vectorizedReaderBatchSize)
+    keyVector.allocateNew(vectorizedReaderBatchSize)
+    valueVector.allocateNew(vectorizedReaderBatchSize)
 
     val vectorSize = endPosition - startPosition
     // Fill Vector
@@ -89,7 +86,6 @@ class SeqBatchInputPartitionReader(seqInputFileIO: SeqInputFileIO)
   }
 
   def fillBatches(): Seq[ColumnarBatch] = {
-
     val batches: util.ArrayList[ColumnarBatch] = new util.ArrayList[ColumnarBatch]
 
     val kw: Writable = WritableHelper.newInstance(keyClass, conf)
@@ -101,17 +97,17 @@ class SeqBatchInputPartitionReader(seqInputFileIO: SeqInputFileIO)
       new RootAllocator(Long.MaxValue))
 
     // Vector allocation
-    ArrowHelper.allocateVector(keyVector, vectorizedReaderBatchSize)
-    ArrowHelper.allocateVector(valueVector, vectorizedReaderBatchSize)
+    keyVector.allocateNew(vectorizedReaderBatchSize)
+    valueVector.allocateNew(vectorizedReaderBatchSize)
 
     var position: Int = 0
     while (reader.next(kw, vw)) {
       if (position < vectorizedReaderBatchSize) {
-        val k = WritableHelper.extractValue(kw)
-        val v = WritableHelper.extractValue(vw)
+        val kValue = WritableHelper.extractValue(kw)
+        val vValue = WritableHelper.extractValue(vw)
 
-        ArrowHelper.fillVector(keyVector, position, k)
-        ArrowHelper.fillVector(valueVector, position, v)
+        ArrowHelper.fillVector(keyVector, position, kValue)
+        ArrowHelper.fillVector(valueVector, position, vValue)
 
         position += 1
       } else {
@@ -121,7 +117,7 @@ class SeqBatchInputPartitionReader(seqInputFileIO: SeqInputFileIO)
 
         val arrowKVector = new ArrowColumnVector(keyVector)
         val arrowVVector = new ArrowColumnVector(valueVector)
-        var batch = new ColumnarBatch(Array(arrowKVector, arrowVVector))
+        val batch = new ColumnarBatch(Array(arrowKVector, arrowVVector))
         batch.setNumRows(position)
         batches.add(batch)
 
@@ -134,14 +130,14 @@ class SeqBatchInputPartitionReader(seqInputFileIO: SeqInputFileIO)
         position = 0
 
         // Vector allocation
-        ArrowHelper.allocateVector(keyVector, vectorizedReaderBatchSize)
-        ArrowHelper.allocateVector(valueVector, vectorizedReaderBatchSize)
+        keyVector.allocateNew(vectorizedReaderBatchSize)
+        valueVector.allocateNew(vectorizedReaderBatchSize)
 
-        val k = WritableHelper.extractValue(kw)
-        val v = WritableHelper.extractValue(vw)
+        val kValue = WritableHelper.extractValue(kw)
+        val vValue = WritableHelper.extractValue(vw)
 
-        ArrowHelper.fillVector(keyVector, position, k)
-        ArrowHelper.fillVector(valueVector, position, v)
+        ArrowHelper.fillVector(keyVector, position, kValue)
+        ArrowHelper.fillVector(valueVector, position, vValue)
 
         position += 1
       }
@@ -152,13 +148,11 @@ class SeqBatchInputPartitionReader(seqInputFileIO: SeqInputFileIO)
 
     val arrowKVector = new ArrowColumnVector(keyVector)
     val arrowVVector = new ArrowColumnVector(valueVector)
-    var batch = new ColumnarBatch(Array(arrowKVector, arrowVVector))
+    val batch = new ColumnarBatch(Array(arrowKVector, arrowVVector))
     batch.setNumRows(position)
     batches.add(batch)
 
     batches.toSeq
-
-
   }
 
 

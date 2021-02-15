@@ -7,9 +7,8 @@
     - [x] read a directory path 
     - [x] read multiples seq files
     - read regex pattern
-- Read optimization ( filter push down, limit count)
 - Write Path
-- Vectorized Read
+- [x] Vectorized Read
 - DevOps:
     - [x] scala style
     - [x] Travis CI
@@ -25,18 +24,37 @@
 
 
 ## Supported types:
-    
-| Spark Types   | Hadoop          |
-| ------------- | ---------------:|
-| LongType      | LongWritable    |
-| DoubleType    | DoubleWritable  |
-| FloatType     | FloatWritable   |
-|  IntegerType  | IntWritable     |
-| BooleanType   | BooleanWritable |
-| NullType      | NullWritable    |
-| StringType    | BytesWritable   |
-| StringType    | Text            |
+The following list contains the type mapping and the supported types by this Data Source.  
+Some types support the vectorized read optimisation (aka Arrow optimization)
 
+| Spark Types   | Spark (Vectorized Read Path) | Hadoop          |
+| ------------- | ------------------------|---------------:|
+| LongType      | Supported | LongWritable    |
+| DoubleType    | Supported |DoubleWritable  |
+| FloatType     | Supported |FloatWritable   |
+|  IntegerType  | Supported |IntWritable     |
+| BooleanType   | Supported |BooleanWritable |
+| NullType      | **Not Supported** |NullWritable    |
+| StringType    | **Not Supported** | BytesWritable   |
+| StringType    | **Not Supported** | Text            |
+
+**N.B**:   
+- The vectorized read path is disabled by default. You can turn it by setting `spark.sql.seq.enableVectorizedReader` to true.
+```scala
+val spark = SparkSession
+          .builder()
+          .master("local[1]")
+          .config("spark.sql.seq.enableVectorizedReader", "true")
+          .getOrCreate()
+```
+
+- If one column doesn't support vectorized read path, the SeqDataSourceV2 will fall back to normal read path.  
+Example: 
+    - The following schema (key : IntegerType, value: FloatType) supports vectorized read path. 
+    - The following schema (key : IntegerType, value: StringType) doesn't support vectorized read path. 
+
+- It's possible to control the number of rows of the batch in the vectorized read path with `spark.sql.seq.columnarReaderBatchSize`.  
+By default, the size of the batch is `4096` rows.
 ## Usage
 `#Todo`
 

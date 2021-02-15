@@ -1,14 +1,14 @@
-package org.gwalid.seq.datasource.v2
+package org.hadoop.io
 
 import java.nio.charset.StandardCharsets
 
-import scala.util.Random
-
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.io._
 import org.apache.hadoop.io.SequenceFile.Writer
+import org.apache.hadoop.io._
 import org.apache.hadoop.util.Progressable
+
+import scala.util.Random
 
 
 class SeqFileGenerator {
@@ -75,51 +75,60 @@ class SeqFileGenerator {
     writeFile(filePath)
   }
 
-  def generateFloatBoolean(filePath: Path): Unit = {
-    keyData = for (i <- 0 until 100) yield r.nextFloat()
-    valueData = for (i <- 0 until 100) yield r.nextBoolean()
+  def generateFloatBoolean(filePath: Path, size: Int = 100): Unit = {
+    keyData = for (i <- 0 until size) yield r.nextFloat()
+    valueData = for (i <- 0 until size) yield r.nextBoolean()
     keyClass = classOf[FloatWritable]
     valueClass = classOf[BooleanWritable]
     writeFile(filePath)
   }
 
-  def generateDoubleInt(filePath: Path): Unit = {
-    keyData = for (i <- 0 until 100) yield r.nextDouble
-    valueData = for (i <- 0 until 100) yield r.nextInt
+  def generateDoubleInt(filePath: Path, size: Int = 100): Unit = {
+    keyData = for (i <- 0 until size) yield r.nextDouble
+    valueData = for (i <- 0 until size) yield r.nextInt
     keyClass = classOf[DoubleWritable]
     valueClass = classOf[IntWritable]
     writeFile(filePath)
   }
 
-  def generateNullBytes(filePath: Path): Unit = {
+  def generateNullBytes(filePath: Path, size: Int = 100): Unit = {
     // Generate data (key:Null,value: Bytes)
-    keyData = for (i <- 0 until 100) yield null
-    valueData = for (i <- 0 until 100) yield generateRandomBytes()
+    keyData = for (i <- 0 until size) yield null
+    valueData = for (i <- 0 until size) yield generateRandomBytes()
     keyClass = classOf[NullWritable]
     valueClass = classOf[BytesWritable]
     writeFile(filePath)
   }
 
-  def generateTextInt(filePath: Path): Unit = {
-    keyData = for (_ <- 0 until 100) yield generateRandomString()
-    valueData = for (_ <- 0 until 100) yield r.nextInt
+  def generateNullInt(filePath: Path, size: Int = 100): Unit = {
+    // Generate data (key:Null,value: Bytes)
+    keyData = for (i <- 0 until size) yield null
+    valueData = for (i <- 0 until size) yield r.nextInt
+    keyClass = classOf[NullWritable]
+    valueClass = classOf[IntWritable]
+    writeFile(filePath)
+  }
+
+  def generateTextInt(filePath: Path, size: Int = 100): Unit = {
+    keyData = for (_ <- 0 until size) yield generateRandomString()
+    valueData = for (_ <- 0 until size) yield r.nextInt
     keyClass = classOf[Text]
     valueClass = classOf[IntWritable]
     writeFile(filePath)
   }
 
-  def generateArrayOfIntInt(filePath: Path): Unit = {
-    keyData = for (_ <- 0 until 100) yield Seq.fill(10)(r.nextInt())
-    valueData = for (- <- 0 until 100) yield r.nextInt
+  def generateArrayOfIntInt(filePath: Path, size: Int = 100): Unit = {
+    keyData = for (_ <- 0 until size) yield Seq.fill(10)(r.nextInt())
+    valueData = for (- <- 0 until size) yield r.nextInt
     keyClass = classOf[ArrayWritable]
     valueClass = classOf[IntWritable]
     keyClassArray = classOf[IntWritable]
     writeFile(filePath)
   }
 
-  def generateArrayOfTextInt(filePath: Path): Unit = {
-    keyData = for (_ <- 0 until 100) yield Seq.fill(10)(generateRandomString())
-    valueData = for (- <- 0 until 100) yield r.nextInt
+  def generateArrayOfTextInt(filePath: Path, size: Int = 100): Unit = {
+    keyData = for (_ <- 0 until size) yield Seq.fill(10)(generateRandomString())
+    valueData = for (- <- 0 until size) yield r.nextInt
     keyClass = classOf[ArrayWritable]
     valueClass = classOf[IntWritable]
     keyClassArray = classOf[Text]

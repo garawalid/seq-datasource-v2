@@ -2,19 +2,19 @@ package org.gwalid.seq.datasource.v2
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.SparkSession
 
-class SeqInputFileIO(path: String) extends Serializable {
+class SeqInputFileIO(uri: String) extends Serializable {
 
-  private lazy val currentPath: Path = new Path(path)
   private lazy val sizeInBytes = computeSizeInBytes()
 
-  def getPath: Path = currentPath
+  def getURI: String = uri
 
   def getSizeInByte: Long = sizeInBytes
 
   def computeSizeInBytes(): Long = {
-
-    val conf = new Configuration() // Fixme: Get it from SparkSession instead
+    val conf = SparkSession.active.sessionState.newHadoopConf()
+    val currentPath: Path = new Path(uri)
     val fs = currentPath.getFileSystem(conf)
     val size = fs.listStatus(currentPath).head.getLen
     size

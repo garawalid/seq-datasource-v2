@@ -8,9 +8,10 @@ import org.apache.hadoop.fs.Path
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{IntegerType, LongType, NullType, StringType, StructType}
+import org.hadoop.io.SeqFileGenerator
 
 
-class ReadPathWithSchema extends FunSuite with BeforeAndAfterAll {
+class ReadPathWithSchemaTest extends FunSuite with BeforeAndAfterAll {
 
   val seqFileGenerator = new SeqFileGenerator()
   val tempDirFile = Files.createTempDirectory(this.getClass.getName).toFile

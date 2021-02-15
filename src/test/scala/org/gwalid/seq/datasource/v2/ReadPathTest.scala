@@ -7,6 +7,7 @@ import java.util.Properties
 import org.apache.hadoop.fs.Path
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import org.apache.spark.sql.SparkSession
+import org.hadoop.io.SeqFileGenerator
 
 class ReadPathTest extends FunSuite with BeforeAndAfterAll {
   val seqFileGenerator = new SeqFileGenerator()
@@ -24,7 +25,7 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
     spark.sparkContext.setLogLevel("WARN")
   }
 
-  test("Read DataFrame : Int & Long") {
+  test("Read DataFrame: Int & Long") {
     val filePath = new Path(tempDir, "data").suffix("/sample-int-long.seq")
     seqFileGenerator.generateIntLong(filePath)
     val df = spark.read.format("seq").load(filePath.toString)
@@ -33,7 +34,7 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
     assert(SeqAssertHelper.getValueDataAs[Long](df) == seqFileGenerator.getValueDataAs[Long])
   }
 
-  test("Read DataFrame Float & Boolean") {
+  test("Read DataFrame: Float & Boolean") {
     val filePath = new Path(tempDir, "data").suffix("/sample-float-boolean.seq")
     seqFileGenerator.generateFloatBoolean(filePath)
     val df = spark.read.format("seq").load(filePath.toString)
@@ -42,8 +43,7 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
     assert(SeqAssertHelper.getValueDataAs[Boolean](df) == seqFileGenerator.getValueDataAs[Boolean])
   }
 
-  test("Read DataFrame Double & Int") {
-
+  test("Read DataFrame: Double & Int") {
     val filePath = new Path(tempDir, "data").suffix("/sample-double-int.seq")
     seqFileGenerator.generateDoubleInt(filePath)
     val df = spark.read.format("seq").load(filePath.toString)
@@ -52,7 +52,7 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
     assert(SeqAssertHelper.getValueDataAs[Int](df) == seqFileGenerator.getValueDataAs[Int])
   }
 
-  test("Read DataFrame Null & Bytes") {
+  test("Read DataFrame: Null & Bytes") {
     val filePath = new Path(tempDir, "data").suffix("/sample-null-bytes.seq")
     seqFileGenerator.generateNullBytes(filePath)
     val df = spark.read.format("seq").load(filePath.toString)
@@ -61,7 +61,7 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
     assert(SeqAssertHelper.getValueDataAs[String](df) == seqFileGenerator.getValueDataAsString)
   }
 
-  test("Read DataFrame Text & Int") {
+  test("Read DataFrame: Text & Int") {
     val filePath = new Path(tempDir, "data").suffix("/sample-text-int.seq")
     seqFileGenerator.generateTextInt(filePath)
     val df = spark.read.format("seq").load(filePath.toString)

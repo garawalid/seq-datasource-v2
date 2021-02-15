@@ -66,9 +66,9 @@ class CompatibilityTest extends FunSuite {
                                path: String) = {
 
     val df = spark.read.format("seq").load(path)
-    val expetedKV = df.collect().map(x => (x(0), x(1))).toSeq
+    val expectedKV = df.collect().map(x => (x(0), x(1))).toSeq
 
-    assert(kvData == expetedKV)
+    assert(kvData == expectedKV)
     assert(df.schema == expectedSchema)
 
   }

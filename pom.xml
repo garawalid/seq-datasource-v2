@@ -27,13 +27,6 @@
                 <spark.version>2.4.6</spark.version>
             </properties>
         </profile>
-
-        <profile>
-            <id>spark-2.3</id>
-            <properties>
-                <spark.version>2.3.4</spark.version>
-            </properties>
-        </profile>
     </profiles>
 
 
@@ -52,6 +45,14 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_${scala.version}</artifactId>
             <version>${spark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_${scala.version}</artifactId>
+            <version>${spark.version}</version>
+            <classifier>tests</classifier>
+            <type>test-jar</type>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.scalatest</groupId>

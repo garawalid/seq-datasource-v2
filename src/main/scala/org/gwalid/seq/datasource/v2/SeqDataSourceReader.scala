@@ -1,27 +1,33 @@
 package org.gwalid.seq.datasource.v2
 
+import java.io.Serializable
 import java.util
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 import org.apache.commons.io.FilenameUtils
+import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.{SequenceFile, Writable}
+import org.apache.spark.SerializableWritable
+import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.sources.v2.DataSourceOptions
 import org.apache.spark.sql.sources.v2.reader.{DataSourceReader, InputPartition, Statistics, SupportsReportStatistics, SupportsScanColumnarBatch}
-import org.apache.spark.sql.types.{StructField, StructType}
+import org.apache.spark.sql.types.{NullType, StringType, StructField, StructType}
 import org.apache.spark.sql.vectorized.ColumnarBatch
 
 
 class SeqDataSourceReader(options: DataSourceOptions,
                           requestedSchema: Option[StructType] = None)
-  extends DataSourceReader with SupportsReportStatistics with SupportsScanColumnarBatch {
+  extends DataSourceReader with SupportsReportStatistics
+    with SupportsScanColumnarBatch with Logging{
 
-  val conf = SparkSession.active.sessionState.newHadoopConf()
-  val filesPath = listAllFiles()
-  val seqFileIO: Seq[SeqInputFileIO] = listAllSeqFiles()
+  private lazy val conf = SparkSession.active.sessionState.newHadoopConf()
+  private lazy val serializableConf = new SerializableWritable[Configuration](conf)
+  private val filesPath = listAllFiles()
+  private val seqFileIO: Seq[SeqInputFileIO] = listAllSeqFiles()
 
   lazy val dataSchema: StructType = getDataSchema
 
@@ -43,7 +49,7 @@ class SeqDataSourceReader(options: DataSourceOptions,
       throw new RuntimeException("There is no path to read. Please set a Path.")
     }
     seqFileIO.foreach(seqInputFile =>
-      inputPartitions.add(new SeqInputPartition(seqInputFile, requestedSchema)))
+      inputPartitions.add(new SeqInputPartition(seqInputFile, requestedSchema, serializableConf)))
 
     inputPartitions
   }
@@ -55,8 +61,11 @@ class SeqDataSourceReader(options: DataSourceOptions,
       // fixme: move it to a proper place
       throw new RuntimeException("There is no path to read. Please set a Path.")
     }
-
-    seqFileIO.foreach(seqInputFile => batchInputPartitions.add(new SeqBatchInputPartition(seqInputFile)))
+    val vrBatchSize = getColumnarReaderBatchSize()
+      seqFileIO.foreach(seqInputFile => {
+        val ip = new SeqBatchInputPartition(seqInputFile, vrBatchSize, serializableConf)
+        batchInputPartitions.add(ip)
+      })
 
     batchInputPartitions
   }
@@ -101,7 +110,7 @@ class SeqDataSourceReader(options: DataSourceOptions,
 
     for (i <- 0 until maxFiles) {
       val randomIndex = Random.nextInt(seqFileIO.length)
-      val pathFile = seqFileIO(randomIndex).getPath
+      val pathFile = new Path(seqFileIO(randomIndex).getURI)
 
       val fileOption = SequenceFile.Reader.file(pathFile)
       val bufferOption = SequenceFile.Reader.bufferSize(1500) // Todo : adjust this value!
@@ -184,12 +193,39 @@ class SeqDataSourceReader(options: DataSourceOptions,
 
   override def enableBatchRead(): Boolean = {
     val enableVectorizedReader = SparkSession.active.conf
-      .get("spark.sql.seq.enableVectorizedReader")
-    enableVectorizedReader.toLowerCase match {
-      case "true" => true
-      case "false" => false
-      case _ => false
+      .getOption("spark.sql.seq.enableVectorizedReader")
+    if (enableVectorizedReader.isDefined) {
+      if (enableVectorizedReader.get.toLowerCase == "true") {
+        val types = dataSchema.map(_.dataType)
+        val supportedTypes = !types.contains(StringType) && !types.contains(NullType)
+        supportedTypes match {
+          case true => logDebug("Vectorized read path is enabled")
+          case false => logWarning("Cannot enable vectorized read path. Falling " +
+            "back to normal read path")
+        }
+        supportedTypes
+      } else {
+        false
+      }
+    } else {
+      false
     }
+  }
+
+  private def getColumnarReaderBatchSize(): Int = {
+    val batchSize = SparkSession.active.conf.
+      get("spark.sql.seq.columnarReaderBatchSize", "4096")
+
+
+    try {
+      batchSize.toInt
+    } catch {
+      case _: Exception =>
+        logWarning(s"Cannot cast spark.sql.seq.columnarReaderBatchSize: ${batchSize}" +
+          s" to integer. This property is set to default value: 4096")
+        4096
+    }
+
   }
 
 }

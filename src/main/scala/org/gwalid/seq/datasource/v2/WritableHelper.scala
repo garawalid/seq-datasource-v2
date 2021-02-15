@@ -21,8 +21,6 @@ object WritableHelper {
   }
 
   def extractValue(writable: Writable): Any = {
-    // Todo: move it to WritableHelper
-    // Todo: Add ArrayWritable, ByteWritable, MapWritable
     writable match {
       case x: LongWritable => x.get()
       case x: DoubleWritable => x.get()

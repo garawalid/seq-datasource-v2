@@ -4,12 +4,11 @@ import java.nio.file.Files
 import java.util
 
 import scala.util.Random
-
 import org.apache.hadoop.fs.Path
 import org.scalatest.FunSuite
-
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.sources.v2.DataSourceOptions
+import org.hadoop.io.SeqFileGenerator
 
 
 class SeqDataSourceReaderTest extends FunSuite {
