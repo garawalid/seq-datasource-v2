@@ -8,13 +8,11 @@
     <artifactId>seq-datasource-v2</artifactId>
     <version>0.1.1-dev1</version>
 
-
     <properties>
         <maven.compiler.source>1.5</maven.compiler.source>
         <maven.compiler.target>1.5</maven.compiler.target>
         <encoding>UTF-8</encoding>
         <scala.version>2.11</scala.version>
-        <jmh.version>1.21</jmh.version>
     </properties>
 
     <profiles>
@@ -58,16 +56,6 @@
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.version}</artifactId>
             <version>3.0.8</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjdk.jmh</groupId>
-            <artifactId>jmh-core</artifactId>
-            <version>${jmh.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjdk.jmh</groupId>
-            <artifactId>jmh-generator-annprocess</artifactId>
-            <version>${jmh.version}</version>
         </dependency>
         <dependency>
             <groupId>net.lingala.zip4j</groupId>
