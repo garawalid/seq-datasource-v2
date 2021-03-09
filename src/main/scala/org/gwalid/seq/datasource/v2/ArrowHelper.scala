@@ -1,8 +1,8 @@
 package org.gwalid.seq.datasource.v2
 
 import org.apache.arrow.memory.RootAllocator
-import org.apache.arrow.vector.{BaseFixedWidthVector, BaseVariableWidthVector, BigIntVector, BitVector, Float4Vector, Float8Vector, IntVector, ValueVector, VarBinaryVector}
-import org.apache.hadoop.io.{BooleanWritable, BytesWritable, DoubleWritable, FloatWritable, IntWritable, LongWritable, Text, Writable}
+import org.apache.arrow.vector.{BaseFixedWidthVector, BigIntVector, BitVector, Float4Vector, Float8Vector, IntVector, ValueVector}
+import org.apache.hadoop.io.{BooleanWritable, DoubleWritable, FloatWritable, IntWritable, LongWritable, Writable}
 
 
 object ArrowHelper {

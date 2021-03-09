@@ -2,7 +2,8 @@ package org.gwalid.seq.datasource.v2
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.io._
+import org.apache.hadoop.io.{SequenceFile, Writable}
+
 import org.apache.spark.SerializableWritable
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.sources.v2.reader.InputPartitionReader

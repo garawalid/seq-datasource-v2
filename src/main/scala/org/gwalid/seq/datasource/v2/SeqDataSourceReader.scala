@@ -1,14 +1,15 @@
 package org.gwalid.seq.datasource.v2
 
-import java.io.Serializable
 import java.util
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
+
 import org.apache.commons.io.FilenameUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.{SequenceFile, Writable}
+
 import org.apache.spark.SerializableWritable
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
@@ -22,7 +23,7 @@ import org.apache.spark.sql.vectorized.ColumnarBatch
 class SeqDataSourceReader(options: DataSourceOptions,
                           requestedSchema: Option[StructType] = None)
   extends DataSourceReader with SupportsReportStatistics
-    with SupportsScanColumnarBatch with Logging{
+    with SupportsScanColumnarBatch with Logging {
 
   private lazy val conf = SparkSession.active.sessionState.newHadoopConf()
   private lazy val serializableConf = new SerializableWritable[Configuration](conf)
@@ -43,11 +44,7 @@ class SeqDataSourceReader(options: DataSourceOptions,
   }
 
   override def planInputPartitions(): util.List[InputPartition[InternalRow]] = {
-    val inputPartitions = new util.ArrayList[InputPartition[InternalRow]]();
-    if (options.paths.length == 0) {
-      // fixme: move it to a proper place
-      throw new RuntimeException("There is no path to read. Please set a Path.")
-    }
+    val inputPartitions = new util.ArrayList[InputPartition[InternalRow]]()
     seqFileIO.foreach(seqInputFile =>
       inputPartitions.add(new SeqInputPartition(seqInputFile, requestedSchema, serializableConf)))
 
@@ -55,17 +52,13 @@ class SeqDataSourceReader(options: DataSourceOptions,
   }
 
   override def planBatchInputPartitions(): util.List[InputPartition[ColumnarBatch]] = {
-    val batchInputPartitions = new util.ArrayList[InputPartition[ColumnarBatch]]();
+    val batchInputPartitions = new util.ArrayList[InputPartition[ColumnarBatch]]()
 
-    if (options.paths.length == 0) {
-      // fixme: move it to a proper place
-      throw new RuntimeException("There is no path to read. Please set a Path.")
-    }
     val vrBatchSize = getColumnarReaderBatchSize()
-      seqFileIO.foreach(seqInputFile => {
-        val ip = new SeqBatchInputPartition(seqInputFile, vrBatchSize, serializableConf)
-        batchInputPartitions.add(ip)
-      })
+    seqFileIO.foreach(seqInputFile => {
+      val ip = new SeqBatchInputPartition(seqInputFile, vrBatchSize, serializableConf)
+      batchInputPartitions.add(ip)
+    })
 
     batchInputPartitions
   }
@@ -108,14 +101,13 @@ class SeqDataSourceReader(options: DataSourceOptions,
     var kClassSample = ArrayBuffer.empty[Class[_ <: Writable]]
     var vClassSample = ArrayBuffer.empty[Class[_ <: Writable]]
 
-    for (i <- 0 until maxFiles) {
+    for (_ <- 0 until maxFiles) {
       val randomIndex = Random.nextInt(seqFileIO.length)
       val pathFile = new Path(seqFileIO(randomIndex).getURI)
 
       val fileOption = SequenceFile.Reader.file(pathFile)
-      val bufferOption = SequenceFile.Reader.bufferSize(1500) // Todo : adjust this value!
       // Todo: Speed reading with OnlyHeaderOption.class
-      val reader = new SequenceFile.Reader(conf, fileOption, bufferOption)
+      val reader = new SequenceFile.Reader(conf, fileOption)
       kClassSample += reader.getKeyClass.asSubclass(classOf[Writable])
       vClassSample += reader.getValueClass.asSubclass(classOf[Writable])
       reader.close()
@@ -216,13 +208,13 @@ class SeqDataSourceReader(options: DataSourceOptions,
     val batchSize = SparkSession.active.conf.
       get("spark.sql.seq.columnarReaderBatchSize", "4096")
 
-
     try {
       batchSize.toInt
     } catch {
-      case _: Exception =>
-        logWarning(s"Cannot cast spark.sql.seq.columnarReaderBatchSize: ${batchSize}" +
-          s" to integer. This property is set to default value: 4096")
+      case _: Exception => logWarning(
+        s"""Cannot cast spark.sql.seq.columnarReaderBatchSize:
+           | ${batchSize} to integer. This property is set to default
+           | value: 4096""".stripMargin.replaceAll("\n", ""))
         4096
     }
 

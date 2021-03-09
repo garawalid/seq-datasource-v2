@@ -3,6 +3,7 @@ package org.gwalid.seq.datasource.v2
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.{ArrayWritable, BooleanWritable, BytesWritable, DoubleWritable, FloatWritable, IntWritable, LongWritable, NullWritable, Text, Writable}
 import org.apache.hadoop.util.ReflectionUtils
+
 import org.apache.spark.unsafe.types.UTF8String
 
 

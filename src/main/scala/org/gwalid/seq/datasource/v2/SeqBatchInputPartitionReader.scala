@@ -2,17 +2,19 @@ package org.gwalid.seq.datasource.v2
 
 import java.util
 
+import scala.collection.JavaConversions._
+
 import org.apache.arrow.memory.RootAllocator
-import org.apache.arrow.vector.{BaseFixedWidthVector, BaseVariableWidthVector, BigIntVector, BitVector, Float4Vector, Float8Vector, IntVector, ValueVector, VarBinaryVector}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.io.{BooleanWritable, BytesWritable, DoubleWritable, FloatWritable, IntWritable, LongWritable, MapWritable, NullWritable, SequenceFile, Text, Writable}
+import org.apache.hadoop.io.{SequenceFile, Writable}
+
 import org.apache.spark.SerializableWritable
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.sources.v2.reader.InputPartitionReader
 import org.apache.spark.sql.vectorized.{ArrowColumnVector, ColumnarBatch}
 
-import scala.collection.JavaConversions._
+
 
 class SeqBatchInputPartitionReader(seqInputFileIO: SeqInputFileIO, vectorizedReaderBatchSize: Int,
                                    serializableConf: SerializableWritable[Configuration])
@@ -43,49 +45,13 @@ class SeqBatchInputPartitionReader(seqInputFileIO: SeqInputFileIO, vectorizedRea
   }
 
   private def getReader: SequenceFile.Reader = {
+    val bufferOption = SequenceFile.Reader.bufferSize(128*1024)
     val fileOption = SequenceFile.Reader.file(new Path(seqInputFileIO.getURI))
-    new SequenceFile.Reader(conf, fileOption)
+    new SequenceFile.Reader(conf, fileOption, bufferOption)
 
   }
 
-  private def createBatch(startPosition: Integer, endPosition: Integer): ColumnarBatch = {
-    val kw: Writable = WritableHelper.newInstance(keyClass, conf)
-    val vw: Writable = WritableHelper.newInstance(valueClass, conf)
-
-    val keyAllocator = new RootAllocator(Long.MaxValue)
-    val valueAllocator = new RootAllocator(Long.MaxValue)
-    val keyVector = ArrowHelper.buildVectorFrom(keyClass, "key", keyAllocator)
-    val valueVector = ArrowHelper.buildVectorFrom(valueClass, "value", valueAllocator)
-
-    // Vector allocation
-    keyVector.allocateNew(vectorizedReaderBatchSize)
-    valueVector.allocateNew(vectorizedReaderBatchSize)
-
-    val vectorSize = endPosition - startPosition
-    // Fill Vector
-    for (i <- 0 until vectorSize) {
-      reader.next(kw, vw)
-
-      val k = WritableHelper.extractValue(kw)
-      val v = WritableHelper.extractValue(vw)
-
-      ArrowHelper.fillVector(keyVector, i, k)
-      ArrowHelper.fillVector(valueVector, i, v)
-
-
-    }
-
-    // Finish filling
-    keyVector.setValueCount(vectorSize)
-    valueVector.setValueCount(vectorSize)
-
-    val arrowKVector = new ArrowColumnVector(keyVector)
-    val arrowVVector = new ArrowColumnVector(valueVector)
-    new ColumnarBatch(Array(arrowKVector, arrowVVector))
-
-  }
-
-  def fillBatches(): Seq[ColumnarBatch] = {
+  private def fillBatches(): Seq[ColumnarBatch] = {
     val batches: util.ArrayList[ColumnarBatch] = new util.ArrayList[ColumnarBatch]
 
     val kw: Writable = WritableHelper.newInstance(keyClass, conf)

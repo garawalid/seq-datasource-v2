@@ -1,6 +1,7 @@
 package org.gwalid.seq.datasource.v2
 
 import org.apache.hadoop.io._
+
 import org.apache.spark.sql.types.{BooleanType, DataType, DoubleType, FloatType, IntegerType, LongType, NullType, StringType}
 
 object TypeHelper {

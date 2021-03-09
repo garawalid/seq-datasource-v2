@@ -1,14 +1,15 @@
 package org.gwalid.seq.datasource.v2
 
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.util.Properties
 
 import org.apache.hadoop.fs.Path
+import org.hadoop.io.SeqFileGenerator
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
+
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{IntegerType, LongType, NullType, StringType, StructType}
-import org.hadoop.io.SeqFileGenerator
+
 
 
 class ReadPathWithSchemaTest extends FunSuite with BeforeAndAfterAll {

@@ -4,18 +4,18 @@ import java.nio.file.Files
 import java.util
 
 import scala.util.Random
+
 import org.apache.hadoop.fs.Path
+import org.hadoop.io.SeqFileGenerator
 import org.scalatest.FunSuite
+
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.sources.v2.DataSourceOptions
-import org.hadoop.io.SeqFileGenerator
-
 
 class SeqDataSourceReaderTest extends FunSuite {
   val seqFileGenerator = new SeqFileGenerator()
   val tempDirFile = Files.createTempDirectory(this.getClass.getName).toFile
   val tempDir: String = tempDirFile.toString
-
 
   test("fsListAllSeqFiles") {
     val dataPath = new Path(tempDir, "data")
@@ -46,7 +46,7 @@ class SeqDataSourceReaderTest extends FunSuite {
     assert(files == expectedFiles)
   }
 
-  def generateRandomTextFile(path: Path): Unit = {
+  private def generateRandomTextFile(path: Path): Unit = {
 
     val writer = new java.io.PrintWriter(path.toString)
     var i = 0;

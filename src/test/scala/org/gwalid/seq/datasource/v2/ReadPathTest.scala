@@ -1,11 +1,11 @@
 package org.gwalid.seq.datasource.v2
 
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.util.Properties
 
 import org.apache.hadoop.fs.Path
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
+
 import org.apache.spark.sql.SparkSession
 import org.hadoop.io.SeqFileGenerator
 
