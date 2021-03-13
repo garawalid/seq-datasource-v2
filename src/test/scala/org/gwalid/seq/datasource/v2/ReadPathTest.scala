@@ -4,10 +4,10 @@ import java.nio.file.Files
 import java.util.Properties
 
 import org.apache.hadoop.fs.Path
+import org.hadoop.io.SeqFileGenerator
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 
 import org.apache.spark.sql.SparkSession
-import org.hadoop.io.SeqFileGenerator
 
 class ReadPathTest extends FunSuite with BeforeAndAfterAll {
   val seqFileGenerator = new SeqFileGenerator()
