@@ -7,3 +7,5 @@ matrix:
 
 notifications:
   email: false
+
+script: mvn package

@@ -6,15 +6,13 @@
 
     <groupId>org.gwalid</groupId>
     <artifactId>seq-datasource-v2</artifactId>
-    <version>0.1.1-dev1</version>
-
+    <version>0.2.0-rc0</version>
 
     <properties>
         <maven.compiler.source>1.5</maven.compiler.source>
         <maven.compiler.target>1.5</maven.compiler.target>
         <encoding>UTF-8</encoding>
         <scala.version>2.11</scala.version>
-        <jmh.version>1.21</jmh.version>
     </properties>
 
     <profiles>
@@ -25,13 +23,6 @@
             </activation>
             <properties>
                 <spark.version>2.4.6</spark.version>
-            </properties>
-        </profile>
-
-        <profile>
-            <id>spark-2.3</id>
-            <properties>
-                <spark.version>2.3.4</spark.version>
             </properties>
         </profile>
     </profiles>
@@ -54,19 +45,17 @@
             <version>${spark.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_${scala.version}</artifactId>
+            <version>${spark.version}</version>
+            <classifier>tests</classifier>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.version}</artifactId>
             <version>3.0.8</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjdk.jmh</groupId>
-            <artifactId>jmh-core</artifactId>
-            <version>${jmh.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjdk.jmh</groupId>
-            <artifactId>jmh-generator-annprocess</artifactId>
-            <version>${jmh.version}</version>
         </dependency>
         <dependency>
             <groupId>net.lingala.zip4j</groupId>

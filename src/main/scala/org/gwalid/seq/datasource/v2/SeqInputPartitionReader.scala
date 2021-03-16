@@ -1,25 +1,26 @@
 package org.gwalid.seq.datasource.v2
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.io._
+import org.apache.hadoop.fs.Path
+import org.apache.hadoop.io.{SequenceFile, Writable}
 
+import org.apache.spark.SerializableWritable
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.util.ArrayData
 import org.apache.spark.sql.sources.v2.reader.InputPartitionReader
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.unsafe.types.UTF8String
 
 
-class SeqInputPartitionReader(seqInputFile: SeqInputFileIO, requestedSchema: Option[StructType])
+class SeqInputPartitionReader(seqInputFile: SeqInputFileIO, requestedSchema: Option[StructType],
+                              serializableConf: SerializableWritable[Configuration])
   extends InputPartitionReader[InternalRow] {
 
-  val conf = new Configuration() // Todo: Ship the conf from the driver to the executor!
+  private val conf = serializableConf.value
 
-  val reader: SequenceFile.Reader = getReader
-  var key: Writable = WritableHelper
+  private val reader: SequenceFile.Reader = getReader
+  private var key: Writable = WritableHelper
     .newInstance(reader.getKeyClass.asInstanceOf[Class[Writable]], conf)
 
-  var value: Writable = WritableHelper
+  private var value: Writable = WritableHelper
     .newInstance(reader.getValueClass.asInstanceOf[Class[Writable]], conf)
 
   override def next(): Boolean = reader.next(key, value)
@@ -29,11 +30,8 @@ class SeqInputPartitionReader(seqInputFile: SeqInputFileIO, requestedSchema: Opt
   override def close(): Unit = reader.close()
 
   private def getReader: SequenceFile.Reader = {
-
-    val fileOption = SequenceFile.Reader.file(seqInputFile.getPath)
-
+    val fileOption = SequenceFile.Reader.file(new Path(seqInputFile.getURI))
     new SequenceFile.Reader(conf, fileOption)
-
   }
 
   private def projectInternalRow(): InternalRow = {
@@ -42,48 +40,26 @@ class SeqInputPartitionReader(seqInputFile: SeqInputFileIO, requestedSchema: Opt
       if (requestedSchema.get.length == 1) {
         val requestedField = requestedSchema.get.last.name
         val internalRow = requestedField match {
-          case "key" => InternalRow(extractValue(key))
-          case "value" => InternalRow(extractValue(value))
+          case "key" => InternalRow(WritableHelper.extractValue(key))
+          case "value" => InternalRow(WritableHelper.extractValue(value))
         }
         internalRow
       } else {
         // Assure the correct order
         val schemaNames = requestedSchema.get.map(_.name)
         schemaNames match {
-          case Seq("key", "value") => InternalRow(extractValue(key), extractValue(value))
-          case Seq("value", "key") => InternalRow(extractValue(value), extractValue(key))
+          case Seq("key", "value") =>
+            InternalRow(WritableHelper.extractValue(key), WritableHelper.extractValue(value))
+          case Seq("value", "key") =>
+            InternalRow(WritableHelper.extractValue(value), WritableHelper.extractValue(key))
         }
 
       }
     } else {
-      InternalRow(extractValue(key), extractValue(value))
+      InternalRow(WritableHelper.extractValue(key), WritableHelper.extractValue(value))
     }
 
   }
 
-  private def extractValue(writable: Writable) = {
-    // Todo: move it to WritableHelper
-    // Todo: Add ArrayWritable, ByteWritable, MapWritable
-    writable match {
-      case x: LongWritable => x.get()
-      case x: DoubleWritable => x.get()
-      case x: FloatWritable => x.get()
-      case x: IntWritable => x.get()
-      case x: BooleanWritable => x.get()
-      case _: NullWritable => null
-      case x: BytesWritable => UTF8String.fromBytes(x.copyBytes())
-      case x: Text => UTF8String.fromString(x.toString)
-      case x: ArrayWritable => extractFromArrayOfWritable(x.get())
-      case x => throw new RuntimeException(s"${x.getClass} is not implemented yet!")
-    }
 
-  }
-
-  def extractFromArrayOfWritable(arrayWritable: Array[Writable]): ArrayData = {
-    // Always cast the element of the array to String.
-    val arrayStr = arrayWritable
-      .map(extractValue(_).toString)
-      .map(UTF8String.fromString)
-    ArrayData.toArrayData(arrayStr)
-  }
 }

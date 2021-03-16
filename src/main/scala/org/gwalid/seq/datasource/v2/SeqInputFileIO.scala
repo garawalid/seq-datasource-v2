@@ -1,28 +1,31 @@
 package org.gwalid.seq.datasource.v2
 
-import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 
-class SeqInputFileIO(path: String) extends Serializable {
+import org.apache.spark.sql.SparkSession
 
-  private lazy val currentPath: Path = new Path(path)
+class SeqInputFileIO(uri: String) extends Serializable {
+
   private lazy val sizeInBytes = computeSizeInBytes()
 
-  def getPath: Path = currentPath
+  def getURI: String = uri
 
   def getSizeInByte: Long = sizeInBytes
 
   def computeSizeInBytes(): Long = {
-
-    val conf = new Configuration() // Fixme: Get it from SparkSession instead
+    val conf = SparkSession.active.sessionState.newHadoopConf()
+    val currentPath: Path = new Path(uri)
     val fs = currentPath.getFileSystem(conf)
-    fs.listStatus(currentPath).head.getLen
+    val size = fs.listStatus(currentPath).head.getLen
+    size
   }
 
-  def getNumRows: Int = {
+  def getNumRows: Long = {
     // Estimates the number of rows: We divide the total size by 30 Bytes
-    math.ceil(sizeInBytes / 30).toInt
+    println(s"getNumRows: ${sizeInBytes / 30L}")
+    sizeInBytes / 30L
   }
+
 
 
 

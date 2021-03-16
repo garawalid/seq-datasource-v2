@@ -9,11 +9,13 @@ import org.scalatest.{BeforeAndAfterAll, FunSuite}
 
 import org.apache.spark.sql.SparkSession
 
-class ReadPathTest extends FunSuite with BeforeAndAfterAll {
+class VectorizedReadPathTest extends FunSuite with BeforeAndAfterAll{
+
   val seqFileGenerator = new SeqFileGenerator()
   val tempDirFile = Files.createTempDirectory(this.getClass.getName).toFile
   val tempDir: String = tempDirFile.toString
   var spark: SparkSession = _
+
 
   override def beforeAll(): Unit = {
     val prop = new Properties()
@@ -21,7 +23,7 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
     org.apache.log4j.PropertyConfigurator.configure(prop)
 
     spark = SparkSession.builder().master("local[1]")
-      .config("spark.sql.seq.enableVectorizedReader", "false")
+      .config("spark.sql.seq.enableVectorizedReader", "true")
       .getOrCreate()
     spark.sparkContext.setLogLevel("WARN")
   }
@@ -36,7 +38,7 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
   }
 
   test("Read DataFrame: Float & Boolean") {
-    val filePath = new Path(tempDir, "data").suffix("/sample-float-boolean.seq")
+    val filePath = new Path(tempDir, "data").suffix("/sample-float-bool.seq")
     seqFileGenerator.generateFloatBoolean(filePath)
     val df = spark.read.format("seq").load(filePath.toString)
 
@@ -53,16 +55,18 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
     assert(SeqAssertHelper.getValueDataAs[Int](df) == seqFileGenerator.getValueDataAs[Int])
   }
 
-  test("Read DataFrame: Null & Bytes") {
-    val filePath = new Path(tempDir, "data").suffix("/sample-null-bytes.seq")
-    seqFileGenerator.generateNullBytes(filePath)
+  test("Read DataFrame: Null & Int") {
+    // Note: Vectorized read should fail and the SeqDataSource must fall back to normal read path.
+    val filePath = new Path(tempDir, "data").suffix("/sample-null-int.seq")
+    seqFileGenerator.generateNullInt(filePath)
     val df = spark.read.format("seq").load(filePath.toString)
 
     assert(SeqAssertHelper.getKeyData(df) == seqFileGenerator.getKeyData)
-    assert(SeqAssertHelper.getValueDataAs[String](df) == seqFileGenerator.getValueDataAsString)
+    assert(SeqAssertHelper.getValueDataAs[Int](df) == seqFileGenerator.getValueDataAs[Int])
   }
 
   test("Read DataFrame: Text & Int") {
+    // Note: Vectorized read should fail and the SeqDataSource must fall back to normal read path.
     val filePath = new Path(tempDir, "data").suffix("/sample-text-int.seq")
     seqFileGenerator.generateTextInt(filePath)
     val df = spark.read.format("seq").load(filePath.toString)
@@ -71,17 +75,42 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
     assert(SeqAssertHelper.getValueDataAs[Int](df) == seqFileGenerator.getValueDataAs[Int])
   }
 
-  test("ReadPath with multiple partitions") {
-    val dataPath = new Path(tempDir, "data").suffix("/samples")
-    val nbFiles = 6
-    val filesPath = for (i <- 0 until nbFiles) yield dataPath.suffix(s"/part-${i}")
-    filesPath.foreach(filePath => seqFileGenerator.generateDoubleInt(filePath))
-    val df = spark.read.format("seq").load(dataPath.toString)
+  test("Fallback test with NullWritable") {
+    // Note: Vectorized read should fail and the SeqDataSource must fall back to normal read path.
+    val filePath = new Path(tempDir, "data").suffix("/sample-null-bytes.seq")
+    seqFileGenerator.generateNullBytes(filePath)
+    val df = spark.read.format("seq").load(filePath.toString)
 
-    assert(df.rdd.getNumPartitions == nbFiles)
-    assert(df.count() == nbFiles * 100)
-
+    assert(SeqAssertHelper.getKeyData(df) == seqFileGenerator.getKeyData)
+    assert(SeqAssertHelper.getValueDataAs[String](df) == seqFileGenerator.getValueDataAsString)
   }
 
+  test("Wrong batch size") {
+    val filePath = new Path(tempDir, "data").suffix("/sample-double-int.seq")
+    seqFileGenerator.generateDoubleInt(filePath)
+    spark.conf.set("spark.sql.seq.columnarReaderBatchSize", "AAA")
+    val df = spark.read.format("seq").load(filePath.toString)
+
+    assert(SeqAssertHelper.getKeyDataAs[Double](df) == seqFileGenerator.getKeyDataAs[Double])
+    assert(SeqAssertHelper.getValueDataAs[Int](df) == seqFileGenerator.getValueDataAs[Int])
+    println(s"df num partitions: ${df.rdd.getNumPartitions}")
+  }
+
+  test("Small batch size") {
+    val filePath = new Path(tempDir, "data").suffix("/sample-double-int.seq")
+    seqFileGenerator.generateDoubleInt(filePath)
+    spark.conf.set("spark.sql.seq.columnarReaderBatchSize", "10")
+    val df = spark.read.format("seq").load(filePath.toString)
+
+    assert(SeqAssertHelper.getKeyDataAs[Double](df) == seqFileGenerator.getKeyDataAs[Double])
+    assert(SeqAssertHelper.getValueDataAs[Int](df) == seqFileGenerator.getValueDataAs[Int])
+    println(s"df num partitions: ${df.rdd.getNumPartitions}")
+  }
+
+  test("Benchmark") {
+
+
+
+  }
 
 }

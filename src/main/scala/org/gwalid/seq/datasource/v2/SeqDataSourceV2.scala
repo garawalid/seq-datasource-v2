@@ -5,14 +5,15 @@ import org.apache.spark.sql.sources.v2.{DataSourceOptions, DataSourceV2, ReadSup
 import org.apache.spark.sql.sources.v2.reader.DataSourceReader
 import org.apache.spark.sql.types.StructType
 
-
 class SeqDataSourceV2 extends DataSourceV2 with ReadSupport with DataSourceRegister {
   override def createReader(options: DataSourceOptions): DataSourceReader = {
-
     createReader(null, options)
   }
 
   override def createReader(schema: StructType, options: DataSourceOptions): DataSourceReader = {
+    if (options.paths.length == 0) {
+      throw new RuntimeException("There is no path to read. Please set a path.")
+    }
 
     new SeqDataSourceReader(options, Option(schema))
   }
