@@ -23,7 +23,8 @@ class VectorizedReadPathTest extends FunSuite with BeforeAndAfterAll{
     org.apache.log4j.PropertyConfigurator.configure(prop)
 
     spark = SparkSession.builder().master("local[1]")
-      .config("spark.sql.seq.enableVectorizedReader", "true").getOrCreate()
+      .config("spark.sql.seq.enableVectorizedReader", "true")
+      .getOrCreate()
     spark.sparkContext.setLogLevel("WARN")
   }
 

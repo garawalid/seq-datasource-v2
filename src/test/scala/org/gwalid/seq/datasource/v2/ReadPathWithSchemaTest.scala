@@ -24,7 +24,9 @@ class ReadPathWithSchemaTest extends FunSuite with BeforeAndAfterAll {
     prop.setProperty("log4j.rootLogger", "WARN")
     org.apache.log4j.PropertyConfigurator.configure(prop)
 
-    spark = SparkSession.builder().master("local[1]").getOrCreate()
+    spark = SparkSession.builder().master("local[1]")
+      .config("spark.sql.seq.enableVectorizedReader", "false")
+      .getOrCreate()
     spark.sparkContext.setLogLevel("WARN")
   }
 
@@ -57,7 +59,7 @@ class ReadPathWithSchemaTest extends FunSuite with BeforeAndAfterAll {
   }
   test("Read path with different names") {
     // Note: This test should raise an exception. We accept only key, value.
-    val filePath = new Path(tempDir, "data").suffix("/sample-int-long.seq")
+    val filePath = new Path(tempDir, "data").suffix("/sample-0-int-long.seq")
     seqFileGenerator.generateIntLong(filePath)
 
     val customSchema = new StructType()
@@ -72,7 +74,7 @@ class ReadPathWithSchemaTest extends FunSuite with BeforeAndAfterAll {
   }
 
   test("Read path with schema (IntegerType, LongType)") {
-    val filePath = new Path(tempDir, "data").suffix("/sample-int-long.seq")
+    val filePath = new Path(tempDir, "data").suffix("/sample-1-int-long.seq")
     seqFileGenerator.generateIntLong(filePath)
 
     val customSchema = new StructType()
@@ -111,14 +113,14 @@ class ReadPathWithSchemaTest extends FunSuite with BeforeAndAfterAll {
   }
 
   test("Read path with inverted schema (IntegerType, LongType)") {
-    val filePath = new Path(tempDir, "data").suffix("/sample-int-long.seq")
+    val filePath = new Path(tempDir, "data").suffix("/sample-2-int-long.seq")
     seqFileGenerator.generateIntLong(filePath)
 
     val customSchema = new StructType()
       .add("value", LongType, true)
       .add("key", IntegerType, true)
     val df = spark.read.format("seq").schema(customSchema).load(filePath.toString)
-
+    df.printSchema()
     assert(SeqAssertHelper.getKeyDataAs[Int](df) == seqFileGenerator.getKeyDataAs[Int])
     assert(SeqAssertHelper.getValueDataAs[Long](df) == seqFileGenerator.getValueDataAs[Long])
   }

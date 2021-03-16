@@ -21,7 +21,8 @@ class ReadPathTest extends FunSuite with BeforeAndAfterAll {
     org.apache.log4j.PropertyConfigurator.configure(prop)
 
     spark = SparkSession.builder().master("local[1]")
-      .config("spark.sql.seq.enableVectorizedReader", "false").getOrCreate()
+      .config("spark.sql.seq.enableVectorizedReader", "false")
+      .getOrCreate()
     spark.sparkContext.setLogLevel("WARN")
   }
 

@@ -3,10 +3,12 @@ package org.gwalid.seq.datasource.v2
 import java.nio.file.Files
 
 import org.apache.hadoop.fs.Path
+import org.apache.hadoop.io.{DoubleWritable, NullWritable}
+import org.apache.hadoop.mapred.{JobConf, SequenceFileOutputFormat}
 import org.scalatest.FunSuite
 
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.types.{BooleanType, ByteType, DoubleType, FloatType, IntegerType, LongType, NullType, StringType, StructType}
+import org.apache.spark.sql.types.{BooleanType, DoubleType, FloatType, IntegerType, LongType, NullType, StringType, StructType}
 
 
 class CompatibilityTest extends FunSuite {
@@ -27,7 +29,8 @@ class CompatibilityTest extends FunSuite {
     sc.parallelize(ilKV).saveAsSequenceFile(ilPath)
     assertDSReadPath(ilKV, ilExpSchema, ilPath)
 
-    val fbKV = Seq((1.0, true), (2.0, false), (2.0, true), (3.0, true), (2.0, true), (1.0, false))
+    val fbKV = Seq((1.0f, true), (2.0f, false),
+      (2.0f, true), (3.0f, true), (2.0f, true), (1.0f, false))
     val fbExpSchema = new StructType()
       .add("key", FloatType, nullable = true)
       .add("value", BooleanType, nullable = true)
@@ -48,8 +51,10 @@ class CompatibilityTest extends FunSuite {
       .add("key", NullType, nullable = true)
       .add("value", DoubleType, nullable = true)
     val nbPath = new Path(tempDir, "data").suffix("/sample-null-double").toString
-     sc.parallelize(nbKV).saveAsSequenceFile(nbPath)
-     assertDSReadPath(nbKV, nbExpSchema, nbPath)
+    sc.parallelize(nbKV).map(x => (NullWritable.get(), new DoubleWritable(x._2)))
+      .saveAsHadoopFile(nbPath, classOf[NullWritable], classOf[DoubleWritable],
+        classOf[SequenceFileOutputFormat[NullWritable, DoubleWritable]])
+    assertDSReadPath(nbKV, nbExpSchema, nbPath)
 
     val tiKV = Seq(("A", 1), ("B", 2), ("C", 3), ("D", 4), ("E", 5))
     val tiExpSchema = new StructType()
