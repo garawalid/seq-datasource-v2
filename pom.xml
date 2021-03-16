@@ -6,7 +6,7 @@
 
     <groupId>org.gwalid</groupId>
     <artifactId>seq-datasource-v2</artifactId>
-    <version>0.2.0-rc0</version>
+    <version>0.2.0</version>
 
     <properties>
         <maven.compiler.source>1.5</maven.compiler.source>
@@ -14,6 +14,14 @@
         <encoding>UTF-8</encoding>
         <scala.version>2.11</scala.version>
     </properties>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/garawalid/seq-datasource-v2</url>
+        </repository>
+    </distributionManagement>
 
     <profiles>
         <profile>
