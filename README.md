@@ -1,6 +1,9 @@
 # SeqDataSourceV2
 [![Build Status](https://travis-ci.com/garawalid/seq-datasource-v2.svg?token=SMJd5DBDDJrYEpCNWqiF&branch=master)](https://travis-ci.com/garawalid/seq-datasource-v2)
 
+The SeqDataSourceV2 package allows to read [Hadoop Sequence File](https://hadoop.apache.org/docs/current/api/org/apache/hadoop/io/SequenceFile.html) with via Spark DataFrame API.  
+It's compatible only with Spark 2.4
+
 ## Motivation:
 - The SeqDataSourceV2 automatically detects the type unlike the RDD API that requires prior knowledge.
 - The SeqDataSourceV2 is faster than the RDD API (See Benchmark at `SeqDataSourceV2Benchmark`).
