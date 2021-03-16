@@ -42,7 +42,39 @@ Example:
 - It's possible to control the number of rows of the batch in the vectorized read path with `spark.sql.seq.columnarReaderBatchSize`.  
 By default, the size of the batch is `4096` rows.
 ## Usage
-`#Todo`
+Example with Scala:
+```scala
+
+    val spark = SparkSession.builder()
+      .master("local[0]")
+      .getOrCreate()
+
+    val df = spark.read.format("seq").load("data.seq")
+    df.show()
+
+```
+Example with Python (Pyspark):
+```python
+    df = spark.read.format("seq").load("/home/nops/Projects/data/sample-float-boolean.seq")
+    df.printSchema()
+
+```
+
+
+
+#### Option 1: Include the jar in the Spark-Submit
+Example with Spark-submit
+```bash
+$ spark-submit --class Main --jars seq-datasource-v2-0.2.0.jar Example-SNAPSHOT.jar
+```
+Example with Pyspark:
+```bash
+pyspark --jars seq-datasource-v2-0.2.0.jar
+```
+
+#### Option 2: Import the package as a dependency
+`Todo`
+
 
 It's possible to pass a schema to DataFrame API. There are few rules around **scehma**.
 - The filed names must be **key** and/or **value**.
