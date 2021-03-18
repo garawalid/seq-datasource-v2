@@ -6,7 +6,7 @@
 
     <groupId>org.gwalid</groupId>
     <artifactId>seq-datasource-v2</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>1.5</maven.compiler.source>
