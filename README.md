@@ -8,12 +8,12 @@
 The SeqDataSourceV2 package allows reading [Hadoop Sequence File](https://hadoop.apache.org/docs/current/api/org/apache/hadoop/io/SequenceFile.html) from Spark SQL.  
 It's compatible only with Spark 2.4
 
-## Features:
+## Features
 - The SeqDataSourceV2 automatically detects the type unlike the RDD API that requires prior knowledge.
 - The SeqDataSourceV2 is 1.3x faster than the RDD API (See Benchmark at `SeqDataSourceV2Benchmark`).
 
 
-## Supported types:
+## Supported types
 The following list contains the type mapping and the supported types by this Data Source.  
 Some types support the vectorized read optimization (aka Arrow optimization)
 
@@ -45,9 +45,11 @@ Example:
 
 - It's possible to control the number of rows of the batch in the vectorized read path with `spark.sql.seq.columnarReaderBatchSize`.  
 By default, the size of the batch is `4096` rows.
-## Usage
+## Installation
 
 #### Option 1: Include the jar in the Spark-Submit
+You need to download the latest release from [the packages page](https://github.com/garawalid/seq-datasource-v2/packages/) and include it in the spark-submit.
+
 Example with spark-submit:
 ```bash
 $ spark-submit --class Main --jars seq-datasource-v2-0.2.0.jar Example-SNAPSHOT.jar
@@ -58,15 +60,18 @@ $ pyspark --jars seq-datasource-v2-0.2.0.jar
 ```
 
 #### Option 2: Include the package in the Spark-Submit
+You can directly include the package with `pacakges` parameters, you can find the latest release in the [spark packages](https://spark-packages.org/package/garawalid/seq-datasource-v2).
+
 Example with spark-submit:
 ```bash
-$ spark-submit --packages garawalid:seq-datasource-v2:0.2.0
+$ spark-submit --class Main --packages garawalid:seq-datasource-v2:0.2.0
 ```
 
 #### Option 3: Import the package as a dependency
-With Maven
-```xml
+You can include the SeqDataSourceV2 as a dependency with Maven, the latest release is in the [the packages page](https://github.com/garawalid/seq-datasource-v2/packages/).
 
+Example with Maven:
+```xml
 <dependency>
   <groupId>org.gwalid</groupId>
   <artifactId>seq-datasource-v2</artifactId>
@@ -74,11 +79,11 @@ With Maven
 </dependency>
 ```
 
-## Examples
+## Usage
+The SeqDataSourceV2 is compatible with all the API. Here are some examples with both Scala and Python API.
 
 **Scala API**
 ```scala
-
     val spark = SparkSession.builder()
       .master("local[0]")
       .getOrCreate()
@@ -94,10 +99,12 @@ With Maven
 
 ```
 
+**Schema**  
 It's possible to pass a schema to DataFrame API. There are few rules around **schema**.
 - The filed names must be **key** and/or **value**.
 > The name **key** will project the key field of the Seq file. The same goes for the **value**
 - The filed type should match the type of the seq file.
+
 
 ```scala
     val schema = new StructType()
